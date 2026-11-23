@@ -7,7 +7,7 @@ Do this before WeAreDevelopers Conference India. It takes about 15 minutes, most
 1. A laptop with **Google Chrome** installed (latest version)
 2. A code editor. We recommend **VS Code** (https://code.visualstudio.com)
 3. The workshop folder, with the AI model inside it (Step 3)
-4. About **5 GB of free disk space** (the model is 1.5 GB, and the browser keeps a working copy of it)
+4. About **5 GB of free disk space** (a `git clone` takes about 2.6 GB, because git keeps its own copy of the 1.5 GB model, and the browser keeps another working copy)
 5. On the day: your **laptop charger**, and a **phone hotspot** as a wifi fallback
 
 ## Checklist
