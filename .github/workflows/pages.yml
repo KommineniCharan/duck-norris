@@ -1,0 +1,46 @@
+# Publishes the site (slides, exercises, showcase) to GitHub Pages.
+# models/ is left out: a Pages site may be at most 1 GB and the model is 1.4 GB.
+# On Pages the pages fall back to Hugging Face for the model (see vendor/web-llm-local.js).
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none            # fetch file contents only for what is checked out, so the model is never downloaded
+          sparse-checkout: |
+            /*
+            !/models/
+            !/.github/
+          sparse-checkout-cone-mode: false
+      - name: Collect the site (no .git, no models)
+        run: |
+          mkdir _site
+          rsync -a --exclude='.git' --exclude='_site' ./ _site/
+          du -sh _site
+          ls _site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

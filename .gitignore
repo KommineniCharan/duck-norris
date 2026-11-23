@@ -1,6 +1,7 @@
 # Allowlist: track only the workshop files and the assets they use.
 /*
 !/.gitignore
+!/.github/
 !/README.md
 !/index.html
 !/slides.html

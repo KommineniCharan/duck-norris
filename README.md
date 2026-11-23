@@ -21,7 +21,7 @@ Nothing is fetched from the internet (except the Wikipedia and weather tools in 
 - `models/gemma-2-2b-it-q4f16_1-MLC/`: the Gemma 2 2B weights, tokenizer and WebGPU library (WASM), copied from Hugging Face and the MLC binary-libs repo. `params_shard_0.bin` is 295 MB, over GitHub's 100 MB file limit, so it is stored as six `.partN` files that the loader joins once in the browser.
 - `vendor/web-llm.js`: WebLLM 0.2.88, the same file the CDN served. `vendor/web-llm-local.js` wraps it: same API, but it points the model at `models/`. Exercise files import `../vendor/web-llm-local.js` instead of `https://esm.run/@mlc-ai/web-llm@0.2.88`.
 - `vendor/`: also the fonts, `marked`, `DOMPurify` and Phaser.
-- A page deployed on its own (chapter 8, GitHub Pages) has no `vendor/` or `models/` next to it, so `5-face.html`, `6-yours.html` and `7-hands.html` fall back to the CDN and Hugging Face.
+- If there is no `models/` folder next to the page, the loader falls back to Hugging Face for the model. That is what happens on GitHub Pages: a Pages site may be at most 1 GB, so [the workflow](.github/workflows/pages.yml) publishes everything except `models/`, and the model downloads from Hugging Face into the browser (needs internet, 1.5 GB). A page deployed on its own (chapter 8) has no `vendor/` either, so `5-face.html`, `6-yours.html` and `7-hands.html` fall back to the CDN as well.
 
 ## Licences and credits
 
