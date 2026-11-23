@@ -100,6 +100,22 @@
   .cmd .w { color: var(--real); font-weight: 600; }
   .row { display: grid; grid-template-columns: 1fr 40px 1fr; align-items: center; gap: 0.5em; padding: 0.45em 0; border-bottom: 1px solid var(--line); font-size: 0.62em; }
   .row .b { color: var(--leak); } .row .a { color: var(--real); font-weight: 700; } .row .ar { text-align: center; color: var(--muted); }
+
+  /* theory infographics */
+  svg.flow { width: 100%; height: auto; max-height: 520px; font-family: 'Inter', sans-serif; overflow: visible; }
+  svg.flow .nd { fill: #fff; stroke: var(--line); stroke-width: 2.5; } svg.flow .nd.teal { fill: #e6f2f0; stroke: #0f766e; } svg.flow .nd.hot { stroke-width: 4; } svg.flow .nd.red { stroke: var(--real); fill: #fff3ef; }
+  svg.flow .ni { color: var(--brand); fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; } svg.flow .teal ~ .ni { color: #0f766e; }
+  svg.flow .nt { font-weight: 800; font-size: 24px; fill: var(--ink); } svg.flow .ns { font-size: 17px; fill: var(--muted); }
+  svg.flow .lane { font-weight: 700; font-size: 15px; letter-spacing: .1em; } svg.flow .lane.t { fill: #0f766e; } svg.flow .lane.r { fill: var(--real); }
+  svg.flow .ln { fill: none; stroke: #5f5a52; stroke-width: 3; } svg.flow .flow-dash { stroke-dasharray: 9 7; animation: dash 1s linear infinite; } svg.flow .back { stroke: #0f766e; stroke-dasharray: 3 8; stroke-linecap: round; animation: dash 1s linear infinite reverse; }
+  svg.flow .back-t { font-size: 19px; font-weight: 600; fill: #0f766e; } svg.flow .dot { fill: var(--brand); }
+  @keyframes dash { to { stroke-dashoffset: -16; } }
+  @media (prefers-reduced-motion: reduce) { svg.flow .flow-dash, svg.flow .back { animation: none; } }
+  .prec { display: flex; gap: .5em; margin-bottom: .6em; }
+  .prec button { font: 700 .62em 'Inter', sans-serif; padding: .4em 1.1em; border-radius: 999px; border: 2px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; } .prec button.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .barbox { height: 46px; background: #fff; border: 2px solid var(--line); border-radius: 10px; overflow: hidden; } .bar { height: 100%; width: 14%; background: var(--brand); transition: width .6s cubic-bezier(.2,.8,.2,1); }
+  .cards.tight { margin-top: .5em; gap: .7em; } .cards.tight .card { padding: .35em .6em; text-align: left; border-color: #f0d9a3; background: #fff6dc; }
+  .probe .pr { display: grid; grid-template-columns: 1fr 1.2fr; gap: .6em; padding: .18em 0; border-bottom: 1px solid var(--line); font-size: .6em; } .probe .k { color: var(--muted); } .probe .v { font-weight: 700; } .probe .ok { color: #0f766e; } .probe .no { color: var(--leak); }
 </style>
 </head>
 <body>
@@ -160,19 +176,79 @@
   <p class="small fragment" style="margin-top:1.4em">Watch the feathers at the bottom. The same strip is on your own page, and it lights up when your code earns it.</p>
 </section>
 
-<!-- THE STACK -->
+<!-- THE STACK: where it lives, and how one prompt travels -->
 <section>
   <h2>Where does it live? In one browser tab.</h2>
-  <div class="chain">
-    <div class="node"><div class="ic"><svg class="i"><use href="#i-file"/></svg></div><b>Your HTML</b><span class="role">one file · no npm · no build</span></div>
-    <span class="lk fragment" data-fragment-index="1">→</span>
-    <div class="node fragment" data-fragment-index="1"><div class="ic"><svg class="i"><use href="#i-bolt"/></svg></div><b>WebLLM</b><span class="role">one import · OpenAI-shaped API</span></div>
-    <span class="lk fragment" data-fragment-index="2">→</span>
-    <div class="node fragment" data-fragment-index="2"><div class="ic"><svg class="i"><use href="#i-chip"/></svg></div><b>WebGPU</b><span class="role">your own GPU, from a web page</span></div>
-    <span class="lk fragment" data-fragment-index="3">→</span>
-    <div class="node fragment" data-fragment-index="3"><div class="ic"><svg class="i"><use href="#i-bot"/></svg></div><b>Gemma 2 2B</b><span class="role">open weights · 4-bit · about 1.5 GB</span></div>
+  <svg class="flow" viewBox="0 0 1100 440" role="img" aria-label="Left: a model is compiled once by MLC into files. Right: on every Send, your page calls WebLLM, which uses WebGPU to run it on your GPU, and words stream back.">
+    <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5f5a52"/></marker></defs>
+    <g class="fragment" data-fragment-index="1">
+      <text class="lane t" x="0" y="16">MADE ONCE · done for you before today</text>
+      <rect class="nd teal" x="0" y="30" width="300" height="110" rx="14"/><use class="ni" href="#i-bot" x="16" y="46" width="44" height="44"/><text class="nt" x="74" y="64">Gemma 2 2B</text><text class="ns" x="74" y="88">original weights</text><text class="ns" x="74" y="108">about 5 GB</text>
+      <path class="ln" d="M304 85H386" marker-end="url(#ah)"/>
+      <rect class="nd teal hot" x="390" y="30" width="300" height="110" rx="14"/><use class="ni" href="#i-bolt" x="406" y="46" width="44" height="44"/><text class="nt" x="464" y="64">MLC</text><text class="ns" x="464" y="88">compiles it for WebGPU</text><text class="ns" x="464" y="108">squeezes it to 4-bit</text>
+      <path class="ln" d="M694 85H776" marker-end="url(#ah)"/>
+      <rect class="nd teal" x="780" y="30" width="320" height="110" rx="14"/><use class="ni" href="#i-file" x="796" y="46" width="44" height="44"/><text class="nt" x="854" y="64">models/ folder</text><text class="ns" x="854" y="88">ready-to-run files</text><text class="ns" x="854" y="108">about 1.5 GB · in the repo</text>
+    </g>
+    <g class="fragment" data-fragment-index="2">
+      <path class="ln flow-dash" d="M940 144V204H480V268" marker-end="url(#ah)"/>
+      <text class="ns" x="670" y="196" text-anchor="middle">loaded once, then cached by the browser</text>
+    </g>
+    <g class="fragment" data-fragment-index="3">
+      <text class="lane r" x="0" y="262">EVERY TIME YOU PRESS SEND · on your laptop</text>
+      <!-- drawn first so the boxes cover it: it only shows on the arrows -->
+      <circle class="dot" r="9"><animateMotion dur="3.2s" repeatCount="indefinite" path="M60 325H1000"/></circle>
+      <rect class="nd" x="0" y="275" width="210" height="100" rx="14"/><use class="ni" href="#i-laptop" x="14" y="289" width="40" height="40"/><text class="nt" x="68" y="316">Your page</text><text class="ns" x="68" y="344">ask("hello")</text><text class="ns" x="68" y="366">one file, no build</text>
+      <path class="ln flow-dash" d="M214 325H266" marker-end="url(#ah)"/>
+      <rect class="nd hot red" x="270" y="275" width="250" height="100" rx="14"/><use class="ni" href="#i-bolt" x="284" y="289" width="40" height="40"/><text class="nt" x="338" y="316">WebLLM</text><text class="ns" x="338" y="344">runs the model</text><text class="ns" x="338" y="366">OpenAI-shaped API</text>
+      <path class="ln flow-dash" d="M524 325H576" marker-end="url(#ah)"/>
+      <rect class="nd" x="580" y="275" width="220" height="100" rx="14"/><use class="ni" href="#i-cloud" x="594" y="289" width="40" height="40"/><text class="nt" x="648" y="316">WebGPU</text><text class="ns" x="648" y="344">browser API</text><text class="ns" x="648" y="366">for the GPU</text>
+      <path class="ln flow-dash" d="M804 325H856" marker-end="url(#ah)"/>
+      <rect class="nd" x="860" y="275" width="240" height="100" rx="14"/><use class="ni" href="#i-chip" x="874" y="289" width="40" height="40"/><text class="nt" x="928" y="316">Your GPU</text><text class="ns" x="928" y="344">does the maths</text><text class="ns" x="928" y="366">in parallel</text>
+    </g>
+    <g class="fragment" data-fragment-index="4">
+      <path class="ln back" d="M1000 392H115" marker-end="url(#ah)"/>
+      <text class="back-t" x="560" y="426" text-anchor="middle">words stream back, one chunk at a time. No network involved.</text>
+    </g>
+  </svg>
+</section>
+
+<!-- WHY 1.5 GB -->
+<section>
+  <span class="ask"><svg class="i"><use href="#i-hand"/></svg> pick one, see what it does to the download</span>
+  <h2>Why only 1.5 GB?</h2>
+  <div class="split" style="align-items:center">
+    <div style="flex:1;min-width:0">
+      <div class="prec" id="prec">
+        <button data-b="32" data-gb="10.4" data-v="Won't fit in most tabs">32-bit</button>
+        <button data-b="16" data-gb="5.2" data-v="A long download, a lot of GPU memory">16-bit</button>
+        <button data-b="8" data-gb="2.6" data-v="Getting there">8-bit</button>
+        <button class="on" data-b="4" data-gb="1.5" data-v="Fits. This is what we use.">4-bit</button>
+      </div>
+      <div class="barbox"><div class="bar" id="bar"></div></div>
+      <p class="big" style="margin:.2em 0 0"><span id="gb" class="brand">1.5 GB</span></p>
+      <p class="small" id="verdict" style="margin:0">Fits. This is what we use.</p>
+      <p class="small" style="margin-top:1em">Same 2.6 billion numbers. MLC just stores each one in fewer bits. A little accuracy lost, a lot of size saved.</p>
+    </div>
+    <img class="art side" id="mlc-art" style="width:260px" src="assets/story/mlc.png" alt="Duck Norris cranking a press that squeezes a big box into a small cube" onerror="this.remove()">
   </div>
-  <p class="fragment" style="margin-top:1.6em">That's all the theory. <b class="brand">Let's hatch it.</b></p>
+</section>
+
+<!-- ASK YOUR BROWSER -->
+<section>
+  <h2>Is your tab ready? Ask it.</h2>
+  <div class="split" style="align-items:center">
+    <div style="flex:1;min-width:0">
+      <div class="probe" id="probe"><div class="pr"><span class="k">WebGPU in this browser</span><span class="v">checking…</span></div></div>
+      <p class="small" style="margin:.5em 0 0">Live, from this page. All green = checks 1 and 2 on the next slides are done.</p>
+    </div>
+    <img class="art side" style="width:200px" src="assets/story/webgpu.png" alt="Duck Norris driving a race car with a GPU chip for an engine" onerror="this.remove()">
+  </div>
+  <div class="cards tight">
+    <div class="card fragment"><b>One big download</b><span class="s">cached per address: use the same one as your prework</span></div>
+    <div class="card fragment"><b>Your GPU, your speed</b><span class="s">streaming hides the wait</span></div>
+    <div class="card fragment"><b>A small brain</b><span class="s">2B parameters, so prompts matter</span></div>
+  </div>
+  <p class="fragment" style="margin:.5em 0 0">That's all the theory. <b class="brand">Let's hatch it.</b></p>
 </section>
 
 <!-- THE REPO -->
@@ -595,6 +671,31 @@ for (let round = 0; round &lt; MAX_TOOL_ROUNDS; round++) {
     if (n > lit) { const c = grow.children[n - 1]; void c.offsetWidth; c.classList.add('new'); }  // a feather was just earned: pop it
     lit = +n || 0;
   };
+
+  // "Why 1.5 GB?": bar width is the size relative to 32-bit (10.4 GB)
+  const prec = document.getElementById('prec');
+  prec.onclick = e => { const b = e.target.closest('button'); if (!b) return;
+    [...prec.children].forEach(c => c.classList.toggle('on', c === b));
+    document.getElementById('bar').style.width = (b.dataset.gb / 10.4 * 100) + '%';
+    document.getElementById('gb').textContent = '≈ ' + b.dataset.gb + ' GB';
+    document.getElementById('verdict').textContent = b.dataset.v; };
+  document.getElementById('bar').style.width = (1.5 / 10.4 * 100) + '%';
+
+  // live WebGPU probe (same facts as setup checks 1 and 2)
+  (async () => {
+    const rows = [], row = (k, v, ok) => rows.push(`<div class="pr"><span class="k">${k}</span><span class="v ${ok == null ? '' : ok ? 'ok' : 'no'}">${v}</span></div>`);
+    const a = navigator.gpu && await navigator.gpu.requestAdapter().catch(() => null);
+    if (!a) row('WebGPU in this browser', '✗ not available', false);
+    else {
+      const i = a.info || {}, gb = (a.limits.maxBufferSize / 2 ** 30).toFixed(1);
+      row('WebGPU in this browser', '✓ available', true);
+      row('Your GPU', [i.vendor, i.architecture || i.description].filter(Boolean).join(' ') || 'hidden by the browser');
+      row('Real GPU, not a CPU pretending', a.isFallbackAdapter ? '✗ fallback adapter' : '✓ yes', !a.isFallbackAdapter);
+      row('16-bit maths (shader-f16)', a.features.has('shader-f16') ? '✓ yes, our model needs it' : '✗ missing', a.features.has('shader-f16'));
+      row('Biggest single buffer', gb + ' GB');
+    }
+    document.getElementById('probe').innerHTML = rows.join('');
+  })();
   Reveal.on('ready', mark);
   Reveal.on('slidechanged', mark);
 </script>
