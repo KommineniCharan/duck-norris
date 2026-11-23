@@ -1,0 +1,50 @@
+# Allowlist: track only the workshop files and the assets they use.
+/*
+!/.gitignore
+!/README.md
+!/index.html
+!/slides.html
+!/check.sh
+!/pre-workshop-guide.md
+
+# exercise files (all of them, including the shared nest.js and style.css)
+!/exercise/
+
+# showcase: the homework-idea apps shown in the slides
+!/showcase/
+
+!/assets/
+/assets/*
+!/assets/chat-screenshot.png
+!/assets/checkpoint-screenshot.png
+!/assets/qr-aishwarya.png
+!/assets/qr-nishant.png
+!/assets/qr-repo.png
+!/assets/speaker-aishwarya.png
+!/assets/speaker.png
+!/assets/story/
+/assets/story/*.md
+!/assets/guide/
+
+!/vendor/
+/vendor/*
+!/vendor/reveal.min.css
+!/vendor/reveal.min.js
+!/vendor/white.min.css
+!/vendor/web-llm.js
+!/vendor/web-llm-local.js
+!/vendor/marked.min.js
+!/vendor/marked.esm.js
+!/vendor/dompurify.esm.js
+!/vendor/phaser.min.js
+!/vendor/fonts.css
+!/vendor/fonts/
+
+# the AI model (1.5 GB) and its WASM, so the workshop runs with no internet. No file is over 50 MB.
+!/models/
+
+# never, anywhere
+.DS_Store
+
+# speaker notes stay on the presenters' machines
+speaker-notes.md

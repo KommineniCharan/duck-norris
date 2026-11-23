@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workshop setup check</title>
+  <link href="../vendor/fonts.css" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font: 16px/1.5 Inter, system-ui, sans-serif; background: #f4f1ea; color: #1c1a17; display: flex; justify-content: center; padding: 2.5rem 1rem; }
+    .card { background: #fff; border-radius: 14px; padding: 2rem 2.2rem; max-width: 660px; width: 100%; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.4rem; }
+    .intro { color: #5f5a52; margin-bottom: 1.2rem; }
+    #summary { font-weight: 600; padding: 0.7rem 1rem; border-radius: 10px; margin-bottom: 1rem; background: #ebe5d8; }
+    #summary.ok { background: #fff6dc; border: 2px solid #f0d9a3; }
+    #summary.bad { background: #fdeeec; border: 2px solid #f0c8c3; color: #8a1c14; }
+    ul { list-style: none; }
+    li { display: grid; grid-template-columns: 1.8rem 1fr; gap: 0.7rem; padding: 0.65rem 0; border-top: 1px solid #ebe5d8; }
+    .ic { width: 1.5rem; height: 1.5rem; border-radius: 50%; display: grid; place-items: center; font-size: 0.85rem; font-weight: 800; background: #ebe5d8; color: #5f5a52; }
+    .ok .ic { background: #f5c21b; color: #1c1a17; }
+    .warn .ic { background: #fff6dc; color: #b45309; border: 2px solid #f0d9a3; }
+    .bad .ic { background: #bf4a3c; color: #fff; }
+    .t { font-weight: 600; }
+    .d { color: #5f5a52; font-size: 0.9rem; word-break: break-word; }
+    .fix { font-size: 0.9rem; margin-top: 0.15rem; color: #8a1c14; }
+    .warn .fix { color: #b45309; }
+    footer { margin-top: 1.2rem; font-size: 0.85rem; color: #5f5a52; }
+    code { font: 0.85em 'JetBrains Mono', ui-monospace, monospace; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Workshop setup check</h1>
+    <p class="intro">Checks your browser, your GPU and the model files in this folder. It loads nothing and needs no internet.</p>
+    <div id="summary">Checking...</div>
+    <ul id="checks"></ul>
+    <footer>Stuck? Take a screenshot of this page and send it to us.</footer>
+  </div>
+
+  <script type="module">
+    const list = document.getElementById("checks"), summary = document.getElementById("summary");
+    const counts = { ok: 0, warn: 0, bad: 0 };
+    const add = (level, title, detail = "", fix = "") => {
+      counts[level]++;
+      const li = document.createElement("li"); li.className = level;
+      li.innerHTML = `<span class="ic">${{ ok: "✓", warn: "!", bad: "✗" }[level]}</span><div><div class="t"></div><div class="d"></div><div class="fix"></div></div>`;
+      li.querySelector(".t").textContent = title; li.querySelector(".d").textContent = detail; li.querySelector(".fix").textContent = fix;
+      list.append(li);
+    };
+    const mb = n => Math.round(n / 1048576).toLocaleString() + " MB";
+    const gb = n => (n / 1e9).toFixed(2) + " GB";
+
+    // 1. Served from a web address, not opened as a file
+    if (location.protocol === "file:") add("bad", "Opened through a web server", "This page was opened as a file (file://).", "In VS Code, right-click this file and choose Open with Live Server.");
+    else if (!isSecureContext) add("bad", "Opened through a secure address", location.origin + " is not a secure context.", "Use Live Server (http://localhost...) or npx serve.");
+    else add("ok", "Opened through a web server", location.origin);
+
+    // 2. Browser
+    const ua = navigator.userAgent, version = +(ua.match(/Chrome\/(\d+)/) || [])[1], edge = /Edg\//.test(ua);
+    if (!version) add("warn", "Browser", ua.slice(0, 80), "Chrome or Edge works best. Firefox and Safari may not have WebGPU yet.");
+    else if (version < 113) add("bad", "Browser is too old", `${edge ? "Edge" : "Chrome"} ${version}`, "Update to the latest version (113 or newer is needed for WebGPU).");
+    else add("ok", "Browser", `${edge ? "Edge" : "Chrome"} ${version}`);
+
+    // 3. The model files (also gives us the biggest single GPU buffer the model needs)
+    let total = 0, biggest = 0;
+    try {
+      const { prebuiltAppConfig } = await import("../vendor/web-llm-local.js");
+      const cfg = prebuiltAppConfig.model_list.find(m => m.model_id === "gemma-2-2b-it-q4f16_1-MLC");
+      const base = cfg.model, size = async url => { const r = await fetch(url, { method: "HEAD" }); return r.ok ? +(r.headers.get("content-length") ?? NaN) : null; };
+      const manifest = await (await fetch(new URL("tensor-cache.json", base))).json();
+      const problems = [];
+      const checkRecord = async r => {
+        biggest = Math.max(biggest, r.nbytes);
+        let n = await size(new URL(r.dataPath, base));
+        if (n === null) {  // a shard over 50 MB is stored as .part1, .part2, ... (see vendor/web-llm-local.js)
+          n = 0; let i = 1, s;
+          while ((s = await size(new URL(`${r.dataPath}.part${i}`, base))) !== null) { n += s; i++; }
+          if (i === 1) return problems.push(`${r.dataPath} is missing`);
+        }
+        total += r.nbytes;
+        if (!Number.isNaN(n) && n !== r.nbytes) problems.push(`${r.dataPath} is incomplete (${mb(n)} of ${mb(r.nbytes)})`);
+      };
+      await Promise.all(manifest.records.map(checkRecord));
+      for (const f of ["mlc-chat-config.json", "tensor-cache.json", "tokenizer.json"]) if ((await size(new URL(f, base))) === null) problems.push(`${f} is missing`);
+      if ((await size(cfg.model_lib)) === null) problems.push("the WebGPU library (.wasm) is missing");
+      if (problems.length) add("bad", "Model files", problems.slice(0, 3).join("; ") + (problems.length > 3 ? ` (and ${problems.length - 3} more)` : ""), "The download is incomplete. Get the whole folder again, ideally with git clone.");
+      else add("ok", "Model files", `All present in the models folder (${manifest.records.length} weight files, ${gb(total)})`);
+    } catch (e) { add("bad", "Model files", String(e.message || e), "Is the vendor and models folder from the repo next to exercise/? Download the whole folder again, ideally with git clone."); }
+
+    // 4. WebGPU and the GPU itself
+    try { if (!navigator.gpu) add("bad", "WebGPU", "This browser has no WebGPU.", "Open chrome://gpu and look for WebGPU: Hardware accelerated. Update Chrome, or try Edge. On Linux see the flags tip in the setup guide.");
+    else {
+      const adapter = await navigator.gpu.requestAdapter().catch(() => null);
+      if (!adapter) add("bad", "GPU", "WebGPU is on, but no GPU adapter was found.", "Check chrome://gpu. Make sure hardware acceleration is on in Chrome settings.");
+      else {
+        const info = adapter.info || (await adapter.requestAdapterInfo?.().catch(() => null)) || {};
+        add("ok", "GPU found", [info.vendor, info.architecture, info.description].filter(Boolean).join(" · ") || "(the browser does not say which)");
+        if (info.isFallbackAdapter ?? adapter.isFallbackAdapter) add("warn", "GPU is running in software", "WebGPU is using the CPU.", "It will work, but slowly. Check chrome://gpu and webgpureport.org.");
+        else add("ok", "Real GPU, not software");
+        adapter.features.has("shader-f16") ? add("ok", "Supports shader-f16", "The model build needs this.") : add("bad", "Does not support shader-f16", "This model build needs it.", "Update Chrome and your graphics drivers. If it still fails, tell us at the workshop.");
+        const maxBuf = Math.min(adapter.limits.maxBufferSize, adapter.limits.maxStorageBufferBindingSize);
+        if (biggest) maxBuf >= biggest ? add("ok", "GPU can hold the biggest model piece", `Largest buffer ${mb(maxBuf)}, needs ${mb(biggest)}`) : add("bad", "GPU buffer too small", `Largest buffer ${mb(maxBuf)}, needs ${mb(biggest)}`, "Your GPU may not have enough memory. Tell us at the workshop.");
+      }
+    } } catch (e) { add("bad", "GPU check failed", String(e.message || e)); }
+
+    // 5. Browser storage (the browser keeps its own working copy of the model)
+    try { if (!self.caches) add("bad", "Browser cache", "The Cache API is not available.", "Open this page through Live Server (see the first check).");
+    else if (navigator.storage?.estimate) {
+      const est = await Promise.race([navigator.storage.estimate(), new Promise(r => setTimeout(r, 3000))]);  // never let a slow answer hold up the verdict
+      if (est) {
+        const free = est.quota - est.usage, need = total || 1.5e9;
+        free > need * 1.2 ? add("ok", "Room for the model in the browser", `${gb(free)} available, needs about ${gb(need)}`) : add("warn", "Little room in the browser", `${gb(free)} available, needs about ${gb(need)}`, "Free up some disk space, or the model may not load.");
+      }
+    } } catch (e) { add("warn", "Browser storage", String(e.message || e)); }
+
+    summary.className = counts.bad ? "bad" : "ok";
+    summary.textContent = counts.bad ? `${counts.bad} thing${counts.bad > 1 ? "s" : ""} to fix before the workshop.` : counts.warn ? `Ready, with ${counts.warn} warning${counts.warn > 1 ? "s" : ""}.` : "All good. You're ready for the workshop.";
+  </script>
+</body>
+</html>

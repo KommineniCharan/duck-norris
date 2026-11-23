@@ -1,0 +1,13 @@
+Gemma is provided under and subject to the Gemma Terms of Use found at gemma.ai/resources/terms
+
+This folder redistributes the Gemma 2 2B instruction-tuned model (google/gemma-2-2b-it) for use in the workshop "Duck Norris Doesn't Phone Home".
+
+A copy of the Gemma Terms of Use is in GEMMA_TERMS_OF_USE.md next to this file. Everyone who receives these files is bound by it, including the use restrictions in Section 3.2 and the Gemma Prohibited Use Policy (https://ai.google.dev/gemma/prohibited_use_policy).
+
+MODIFIED FILES
+These files are modified versions of the original Gemma weights and tokenizer:
+- The weights were converted and quantized to the MLC "q4f16_1" format by the MLC-AI project (https://huggingface.co/mlc-ai/gemma-2-2b-it-q4f16_1-MLC). The files params_shard_*.bin, tensor-cache.json, mlc-chat-config.json and tokenizer.json come from that conversion.
+- resolve/main/params_shard_0.bin (295 MB) was split by this repository into six files, params_shard_0.bin.part1 to .part6, because it is over GitHub's 100 MB file limit. Joined in order they are byte for byte the MLC file. vendor/web-llm-local.js joins them.
+- gemma-2-2b-it-q4f16_1_cs1k-webgpu.wasm is the MLC WebGPU model library, from https://github.com/mlc-ai/binary-mlc-llm-libs.
+
+Gemma is a trademark of Google LLC. Nothing here suggests that Google endorses this repository.
