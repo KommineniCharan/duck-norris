@@ -83,9 +83,9 @@
       await Promise.all(manifest.records.map(checkRecord));
       for (const f of ["mlc-chat-config.json", "tensor-cache.json", "tokenizer.json"]) if ((await size(new URL(f, base))) === null) problems.push(`${f} is missing`);
       if ((await size(cfg.model_lib)) === null) problems.push("the WebGPU library (.wasm) is missing");
-      if (problems.length) add("bad", "Model files", problems.slice(0, 3).join("; ") + (problems.length > 3 ? ` (and ${problems.length - 3} more)` : ""), "The download is incomplete. Get the whole folder again, ideally with git clone.");
+      if (problems.length) add("bad", "Model files", problems.slice(0, 3).join("; ") + (problems.length > 3 ? ` (and ${problems.length - 3} more)` : ""), "The download is incomplete. Get the whole folder again as zip");
       else add("ok", "Model files", `All present in the models folder (${manifest.records.length} weight files, ${gb(total)})`);
-    } catch (e) { add("bad", "Model files", String(e.message || e), "Is the vendor and models folder from the repo next to exercise/? Download the whole folder again, ideally with git clone."); }
+    } catch (e) { add("bad", "Model files", String(e.message || e), "Is the vendor and models folder from the repo next to exercise/? Download the whole folder again as zip"); }
 
     // 4. WebGPU and the GPU itself
     try { if (!navigator.gpu) add("bad", "WebGPU", "This browser has no WebGPU.", "Open chrome://gpu and look for WebGPU: Hardware accelerated. Update Chrome, or try Edge. On Linux see the flags tip in the setup guide.");
