@@ -42,5 +42,6 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+      - run: sleep 15  # the artifact list API lags right after upload; deploy-pages then finds 0 artifacts
       - id: deployment
         uses: actions/deploy-pages@v4
