@@ -69,7 +69,8 @@
       const { prebuiltAppConfig } = local;
       const cfg = prebuiltAppConfig.model_list.find(m => m.model_id === "gemma-2-2b-it-q4f16_1-MLC");
       const base = cfg.model, size = async url => { const r = await fetch(url, { method: "HEAD" }); return r.ok ? +(r.headers.get("content-length") ?? NaN) : null; };
-      const manifest = await (await fetch(new URL("tensor-cache.json", base))).json();
+      const manifest = await (await fetch(new URL("tensor-cache.json", base))).json().catch(() => null);
+      if (!manifest) { add("ok", "Model files", "No local models folder here (GitHub Pages is too small for it), so the model downloads from Hugging Face on first run"); throw 0; }
       const problems = [];
       const checkRecord = async r => {
         biggest = Math.max(biggest, r.nbytes);
