@@ -64,7 +64,9 @@
     // 3. The model files (also gives us the biggest single GPU buffer the model needs)
     let total = 0, biggest = 0;
     try {
-      const { prebuiltAppConfig } = await import("../vendor/web-llm-local.js");
+      const local = await import("../vendor/web-llm-local.js").catch(() => null);
+      if (!local) { add("ok", "Model files", "No local models folder here, so the model downloads from the web (CDN and Hugging Face) on first run"); throw 0; }  // same fallback as the exercise pages
+      const { prebuiltAppConfig } = local;
       const cfg = prebuiltAppConfig.model_list.find(m => m.model_id === "gemma-2-2b-it-q4f16_1-MLC");
       const base = cfg.model, size = async url => { const r = await fetch(url, { method: "HEAD" }); return r.ok ? +(r.headers.get("content-length") ?? NaN) : null; };
       const manifest = await (await fetch(new URL("tensor-cache.json", base))).json();
@@ -85,7 +87,7 @@
       if ((await size(cfg.model_lib)) === null) problems.push("the WebGPU library (.wasm) is missing");
       if (problems.length) add("bad", "Model files", problems.slice(0, 3).join("; ") + (problems.length > 3 ? ` (and ${problems.length - 3} more)` : ""), "The download is incomplete. Get the whole folder again as zip");
       else add("ok", "Model files", `All present in the models folder (${manifest.records.length} weight files, ${gb(total)})`);
-    } catch (e) { add("bad", "Model files", String(e.message || e), "Is the vendor and models folder from the repo next to exercise/? Download the whole folder again as zip"); }
+    } catch (e) { if (e !== 0) add("bad", "Model files", String(e.message || e), "Is the vendor and models folder from the repo next to exercise/? Download the whole folder again as zip"); }
 
     // 4. WebGPU and the GPU itself
     try { if (!navigator.gpu) add("bad", "WebGPU", "This browser has no WebGPU.", "Open chrome://gpu and look for WebGPU: Hardware accelerated. Update Chrome, or try Edge. On Linux see the flags tip in the setup guide.");
